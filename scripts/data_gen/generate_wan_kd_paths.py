@@ -42,7 +42,8 @@ def parse_args():
     parser.add_argument("--guidance-scale", type=float, default=5.0)
     parser.add_argument("--shift", type=float, default=5.0)
     parser.add_argument("--t-list", default="0.999,0.937,0.833,0.624", help="student timesteps to record (desc.)")
-    parser.add_argument("--shard-size", type=int, default=25)
+    parser.add_argument("--shard-size", type=int, default=8)
+    parser.add_argument("--batch-size", type=int, default=2, help="prompts sampled together")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--start-idx", type=int, default=0, help="resume: first sample index to write")
     return parser.parse_args()
@@ -104,15 +105,20 @@ def main():
     t_targets = [float(v) for v in args.t_list.split(",")]
     path_timesteps = None
 
+    assert args.start_idx % args.shard_size == 0, "--start-idx must be a multiple of --shard-size (resume at a shard boundary)"
     shard_pattern = os.path.join(args.out_dir, "%05d.tar")
+    B = args.batch_size
     with wds.ShardWriter(shard_pattern, maxcount=args.shard_size, start_shard=args.start_idx // args.shard_size) as sink:
-        for idx in tqdm(range(args.start_idx, args.num_samples), desc="teacher ODE"):
-            prompt = prompts[idx % len(prompts)]
-            g = torch.Generator(device=device).manual_seed(args.seed * 100003 + idx)
-            noise = torch.randn((1, *shape), device=device, dtype=dtype, generator=g)
-            cond = net.text_encoder.encode([prompt], precision=dtype).to(device)
+        for start in tqdm(range(args.start_idx, args.num_samples, B), desc="teacher ODE (batches)"):
+            idxs = list(range(start, min(start + B, args.num_samples)))
+            batch_prompts = [prompts[i % len(prompts)] for i in idxs]
+            noise = torch.cat(
+                [torch.randn((1, *shape), device=device, dtype=dtype,
+                             generator=torch.Generator(device=device).manual_seed(args.seed * 100003 + i)) for i in idxs]
+            )
+            cond = net.text_encoder.encode(batch_prompts, precision=dtype).to(device)
             x0, path, path_t = sample_with_path(
-                net, noise, cond, neg_emb, t_targets, args.num_steps, args.guidance_scale, args.shift
+                net, noise, cond, neg_emb.expand(len(idxs), -1, -1), t_targets, args.num_steps, args.guidance_scale, args.shift
             )
             if path_timesteps is None:
                 path_timesteps = path_t + [0.0]
@@ -121,15 +127,16 @@ def main():
                                    num_steps=args.num_steps, guidance_scale=args.guidance_scale, shift=args.shift,
                                    latent_shape=shape), f, indent=2)
                 logger.info(f"Recording path at teacher timesteps {path_t} (requested {t_targets})")
-            sink.write(
-                {
-                    "__key__": f"{idx:08d}",
-                    "latent.pth": x0[0].to(torch.float16).cpu(),
-                    "path.pth": path[0].to(torch.float16).cpu(),
-                    "txt_emb.pth": cond[0].to(torch.float16).cpu(),
-                    "json": json.dumps(dict(prompt=prompt, seed=args.seed * 100003 + idx)).encode(),
-                }
-            )
+            for b, idx in enumerate(idxs):
+                sink.write(
+                    {
+                        "__key__": f"{idx:08d}",
+                        "latent.pth": x0[b].to(torch.float16).cpu(),
+                        "path.pth": path[b].to(torch.float16).cpu(),
+                        "txt_emb.pth": cond[b].to(torch.float16).cpu(),
+                        "json": json.dumps(dict(prompt=batch_prompts[b], seed=args.seed * 100003 + idx)).encode(),
+                    }
+                )
     logger.success(f"Wrote samples {args.start_idx}..{args.num_samples - 1} to {args.out_dir}")
 
 
