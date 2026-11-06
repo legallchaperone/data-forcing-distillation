@@ -161,7 +161,7 @@ class GradClipCallback(Callback):
         # assert (
         #     self.model_key in model.optimizer_dict.keys()
         # ), f"Keys in optimizer_dict: {list(model.optimizer_dict.keys())}."
-        if model.config.dmd_use_teacher_model_as_fake_score_estimate:
+        if getattr(model.config, "dmd_use_teacher_model_as_fake_score_estimate", False):
                 _optimizer_dict = {
                     "net": model.net_optimizer,
                 }

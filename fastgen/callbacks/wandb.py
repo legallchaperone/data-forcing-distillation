@@ -220,7 +220,7 @@ class WandbCallback(Callback):
     def on_optimizer_step_begin(self, model: FastGenModel, iteration: int = 0) -> None:
         assert hasattr(self, "config"), "Missing config in WandbCallback."
         if iteration % self.config.trainer.logging_iter == 0:
-            if model.config.dmd_use_teacher_model_as_fake_score_estimate:
+            if getattr(model.config, "dmd_use_teacher_model_as_fake_score_estimate", False):
                  _scheduler_dict = {
                     "net": model.net_lr_scheduler,
                 }
