@@ -57,4 +57,17 @@ filled by an `EMACallback(type="snapshot", snapshot_iter=..., ema_name=swift_wea
 **Logged:** `recon_loss` is the training loss against the extrapolated target; `recon_loss_plain` is the MSE against
 the un-extrapolated teacher output and is the quantity to compare against a plain-KD run.
 
-**Configs:** [`WanT2V/config_kd_causal_swift.py`](../../configs/experiments/WanT2V/config_kd_causal_swift.py)
+**Configs:** [`WanT2V/config_kd_causal_swift.py`](../../configs/experiments/WanT2V/config_kd_causal_swift.py),
+[`EDM/config_kd_cifar10.py`](../../configs/experiments/EDM/config_kd_cifar10.py) (baseline) /
+[`EDM/config_kd_cifar10_swift.py`](../../configs/experiments/EDM/config_kd_cifar10_swift.py)
+
+**CIFAR-10 reference run** (single seed, 4000 iters, batch 256, EDM cond-vp teacher pairs from
+`scripts/data_gen/generate_edm_kd_pairs.py`; raw curves in `assets/experiments/cifar10_kd_swift/results.json`):
+
+| FID-10k at iteration | 500 | 1000 | 1500 | 2000 | 2500 | 3000 | 3500 | 4000 |
+|---|---|---|---|---|---|---|---|---|
+| plain KD | 28.2 | 21.6 | 18.6 | 16.5 | 15.3 | 14.8 | 13.9 | 13.4 |
+| KD + SWIFT (alpha 0.25, snapshot at 1000) | 27.8 | 22.8 | 16.5 | 14.8 | 12.7 | 11.9 | 10.7 | 10.5 |
+
+The two runs are identical before the snapshot. After it, the un-extrapolated regression loss is about 4% lower and
+FID is lower at every checkpoint; SWIFT at 2500 iterations already matches plain KD at 4000.
