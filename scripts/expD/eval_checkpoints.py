@@ -11,7 +11,7 @@ Example:
     PYTHONPATH=$(pwd) python scripts/expD/eval_checkpoints.py \
         --config fastgen/configs/experiments/WanT2V/config_kd_causal_swift.py \
         --heldout-dir $DATA_ROOT_DIR/wan1.3b-kd-paths-heldout --videos 2 --out /tmp/fg/out/eval_swift.json \
-        -- log_config.name=kd_causal_swift_a025 model.swift_alpha=0.25 log_config.wandb_mode=disabled
+        - log_config.name=kd_causal_swift_a025 model.swift_alpha=0.25 log_config.wandb_mode=disabled
 """
 
 import argparse

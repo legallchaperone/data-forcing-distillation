@@ -28,7 +28,7 @@ fi
 COMMON="trainer.max_iter=$MAX_ITER trainer.save_ckpt_iter=$SAVE_EVERY trainer.validation_iter=100000 trainer.logging_iter=25 model.swift_snapshot_iter=$SNAPSHOT trainer.callbacks.ema_swift.snapshot_iter=$SNAPSHOT log_config.wandb_mode=disabled"
 CFG=fastgen/configs/experiments/WanT2V/config_kd_causal_swift.py
 echo "== TRAIN LAUNCH $(date -u)"
-nohup $PY train.py --config $CFG -- $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  >> /tmp/fg/trainD_baseline.log 2>&1 &
+nohup $PY train.py --config $CFG - $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  >> /tmp/fg/trainD_baseline.log 2>&1 &
 sleep 20
-nohup $PY train.py --config $CFG -- $COMMON model.swift_alpha=0.25 log_config.name=kd_causal_swift_a025 >> /tmp/fg/trainD_swift.log 2>&1 &
+nohup $PY train.py --config $CFG - $COMMON model.swift_alpha=0.25 log_config.name=kd_causal_swift_a025 >> /tmp/fg/trainD_swift.log 2>&1 &
 echo "== TRAIN LAUNCHED $(date -u)"
