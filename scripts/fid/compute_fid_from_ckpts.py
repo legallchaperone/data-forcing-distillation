@@ -29,6 +29,7 @@ from scripts.fid.fid import calc
 
 DATASETS = {
     "cifar10-32x32.zip": "cifar10",
+    "cifar10-edm-kd-pairs": "cifar10",
     "imagenet-64x64.zip": "imagenet64",
     "imagenet-64x64-edmv2.zip": "imagenet64-edmv2",
     "imagenet_256_sd.zip": "imagenet256",
