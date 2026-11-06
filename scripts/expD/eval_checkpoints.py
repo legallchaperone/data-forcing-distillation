@@ -84,6 +84,7 @@ def decode_videos(model, samples, out_dir, tag, seed=0):
     if not hasattr(net, "vae"):
         net.init_vae()
     net.vae.to(device=model.device, dtype=model.precision)
+    net.eval()
     ctx = dict(device=model.device, dtype=model.precision)
     for i, s in enumerate(samples):
         g = torch.Generator(device=model.device).manual_seed(seed + i)
@@ -97,7 +98,7 @@ def decode_videos(model, samples, out_dir, tag, seed=0):
             context_noise=getattr(model.config, "context_noise", 0),
             precision_amp=model.precision_amp_infer,
         )
-        video = net.decode(latents)[0]  # [C, T, H, W] in [-1, 1]
+        video = net.vae.decode(latents)[0]  # VAE wrapper handles latent de-normalization; [C, T, H, W] in [-1, 1]
         frames = ((video.permute(1, 2, 3, 0).float().cpu().numpy() + 1) * 127.5).clip(0, 255).astype(np.uint8)
         path = os.path.join(out_dir, f"{tag}_{i:02d}.mp4")
         imageio.mimwrite(path, list(frames), fps=16, quality=7)
