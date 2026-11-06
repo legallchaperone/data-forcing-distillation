@@ -90,7 +90,9 @@ def calculate_inception_stats(
 
 def calculate_fid_from_inception_stats(mu, sigma, mu_ref, sigma_ref):
     m = np.square(mu - mu_ref).sum()
-    s, _ = scipy.linalg.sqrtm(np.dot(sigma, sigma_ref), disp=False)
+    s = scipy.linalg.sqrtm(np.dot(sigma, sigma_ref))
+    if isinstance(s, tuple):  # scipy < 1.18 returned (sqrtm, errest) with disp=False; newer versions return the array
+        s = s[0]
     fid = m + np.trace(sigma + sigma_ref - s * 2)
     return float(np.real(fid))
 
