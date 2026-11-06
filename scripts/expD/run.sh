@@ -2,10 +2,14 @@
 # Exp D pipeline (resumable): teacher path generation until a wall-clock deadline, then causal KD baseline + SWIFT.
 # Re-running resumes generation at the last complete shard and resumes training from the latest checkpoint.
 # Env knobs: GEN_HOURS (default 3) generation budget from first launch; TARGET (default 400) max samples;
-#            MAX_ITER (default 2000), SAVE_EVERY (default 250), SNAPSHOT (default MAX_ITER/4).
+#            MAX_ITER (default 2000), SAVE_EVERY (default 250), SNAPSHOT (default MAX_ITER/4);
+#            LATENT (default 16,21,60,104 = 480p x 81 frames; e.g. 16,9,40,72 = 320x576 x 33 frames);
+#            WORKERS (default 2) and SHUFFLE (default 32): keep host memory bounded (samples are ~50 MB each).
 source /tmp/fg/env.sh; cd /tmp/fg/src
 DATA=/tmp/fg/out/DATA/wan1.3b-kd-paths; SHARD=8; TARGET=${TARGET:-400}
 MAX_ITER=${MAX_ITER:-2000}; SAVE_EVERY=${SAVE_EVERY:-250}; SNAPSHOT=${SNAPSHOT:-$((MAX_ITER/4))}
+LATENT=${LATENT:-16,21,60,104}; WORKERS=${WORKERS:-2}; SHUFFLE=${SHUFFLE:-32}
+NUM_FRAMES=$(echo $LATENT | cut -d, -f2)
 mkdir -p $DATA
 # the deadline is fixed at first launch so that re-runs do not extend the generation budget
 [ -f $DATA/.deadline ] || date -u -d "+${GEN_HOURS:-3} hours" +%s > $DATA/.deadline
@@ -17,7 +21,7 @@ if [ ! -f $DATA/.gen_done ]; then
     N=$(complete_shards); START=$((N*SHARD))
     if [ $START -ge $TARGET ]; then break; fi
     echo "== GEN from sample $START ($N complete shards) $(date -u)"
-    $PY scripts/data_gen/generate_wan_kd_paths.py --num-samples $TARGET --start-idx $START --shard-size $SHARD --batch-size 2 --num-steps 30 --out-dir $DATA >> /tmp/fg/gen_paths.log 2>&1 &
+    $PY scripts/data_gen/generate_wan_kd_paths.py --num-samples $TARGET --start-idx $START --shard-size $SHARD --batch-size 2 --num-steps 30 --latent-shape $LATENT --out-dir $DATA >> /tmp/fg/gen_paths.log 2>&1 &
     GENPID=$!
     while kill -0 $GENPID 2>/dev/null && [ $(date +%s) -lt $GEN_DEADLINE ]; do sleep 30; done
     if kill -0 $GENPID 2>/dev/null; then echo "== GEN DEADLINE, stopping $(date -u)"; kill $GENPID; sleep 5; kill -9 $GENPID 2>/dev/null; break; fi
@@ -25,7 +29,7 @@ if [ ! -f $DATA/.gen_done ]; then
   done
   N=$(complete_shards); echo "== GEN DONE: $N complete shards = $((N*SHARD)) samples $(date -u)"; touch $DATA/.gen_done
 fi
-COMMON="trainer.max_iter=$MAX_ITER trainer.save_ckpt_iter=$SAVE_EVERY trainer.validation_iter=100000 trainer.logging_iter=25 model.swift_snapshot_iter=$SNAPSHOT trainer.callbacks.ema_swift.snapshot_iter=$SNAPSHOT log_config.wandb_mode=disabled"
+COMMON="trainer.max_iter=$MAX_ITER trainer.save_ckpt_iter=$SAVE_EVERY trainer.validation_iter=100000 trainer.logging_iter=25 model.swift_snapshot_iter=$SNAPSHOT trainer.callbacks.ema_swift.snapshot_iter=$SNAPSHOT log_config.wandb_mode=disabled model.input_shape=[$LATENT] model.net.total_num_frames=$NUM_FRAMES dataloader_train.num_workers=$WORKERS dataloader_train.shuffle_size=$SHUFFLE"
 CFG=fastgen/configs/experiments/WanT2V/config_kd_causal_swift.py
 echo "== TRAIN LAUNCH $(date -u)"
 nohup $PY train.py --config $CFG - $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  >> /tmp/fg/trainD_baseline.log 2>&1 &
