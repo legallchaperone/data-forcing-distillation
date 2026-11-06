@@ -136,7 +136,7 @@ class Trainer:
 
         if self.config.trainer.resume or autoresume_ckpt is not None:
             logger.info("Loading checkpoints for resuming ..")
-            if model.config.dmd_use_teacher_model_as_fake_score_estimate:
+            if getattr(model.config, "dmd_use_teacher_model_as_fake_score_estimate", False):
                 _optimizer_dict = {
                     "net": model.net_optimizer,
                 }
