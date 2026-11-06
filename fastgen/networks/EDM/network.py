@@ -1020,7 +1020,8 @@ class EDMPrecond(FastGenNetwork):
 
             # EDM Euler step: x_next = x0 + sigma_next * (x - x0) / sigma
             # Equivalent to: x_next = x + (sigma_next - sigma) * (x - x0) / sigma
-            d = (x - x0_pred) / expand_like(t, x)  # derivative estimate
+            # keep x in its own dtype: t/sigma are float64 and would otherwise upcast x (and all later forwards)
+            d = (x - x0_pred) / expand_like(t, x).to(x.dtype)  # derivative estimate
             x = x + (sigma_next - sigma).to(x.dtype) * d
 
         return x

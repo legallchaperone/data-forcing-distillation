@@ -4,7 +4,7 @@
 """Generate single-step KD pairs (noise, teacher sample, condition) with a class-conditional EDM teacher.
 
 Writes WebDataset shards compatible with `PairLoaderConfig` (`fastgen/configs/data.py`):
-    latent.pth   teacher sample x_0 (deterministic EDM Euler sampler, no CFG)
+    latent.pth   teacher sample x_0 (deterministic EDM Heun sampler, no CFG)
     noise.pth    the latent fed to the one-step student at t = max_t, i.e. eps * sigma(max_t)
     txt_emb.pth  one-hot class label
 
@@ -33,7 +33,8 @@ def parse_args():
     parser.add_argument("--out-dir", default=f"{DATA_ROOT_DIR}/cifar10-edm-kd-pairs")
     parser.add_argument("--num-samples", type=int, default=50000)
     parser.add_argument("--batch-size", type=int, default=500)
-    parser.add_argument("--num-steps", type=int, default=40, help="EDM Euler sampler steps")
+    parser.add_argument("--num-steps", type=int, default=18, help="EDM Heun sampler steps (2 NFE each)")
+    parser.add_argument("--no-autocast", action="store_true", help="disable bf16 autocast for the teacher")
     parser.add_argument("--shard-size", type=int, default=5000)
     parser.add_argument("--label-dim", type=int, default=10)
     parser.add_argument("--seed", type=int, default=0)
@@ -41,10 +42,34 @@ def parse_args():
 
 
 @torch.no_grad()
+def heun_sample(net, eps, cond, sigmas, autocast: bool):
+    """EDM deterministic Heun sampler (Karras et al. 2022, Algorithm 1 without churn). Keeps x in its own dtype."""
+    x = net.noise_scheduler.latents(noise=eps, t_init=sigmas[0])
+    dtype = x.dtype
+
+    def denoise(x_in, sigma):
+        t = sigma.to(dtype).expand(x_in.shape[0])
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=autocast):
+            return net(x_in, t, condition=cond, fwd_pred_type="x0").to(dtype)
+
+    for sigma, sigma_next in zip(sigmas[:-1], sigmas[1:]):
+        s, s_next = sigma.to(dtype), sigma_next.to(dtype)
+        d = (x - denoise(x, sigma)) / s
+        x_next = x + (s_next - s) * d
+        if sigma_next > 0:
+            d_next = (x_next - denoise(x_next, sigma_next)) / s_next
+            x_next = x + (s_next - s) * 0.5 * (d + d_next)
+        x = x_next
+    return x
+
+
+@torch.no_grad()
 def main():
     args = parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
 
     net = instantiate(EDM_CIFAR10_Config).to(device).eval()
     load_info = net.load_state_dict(torch.load(args.ckpt, map_location=device, weights_only=True), strict=False)
@@ -61,7 +86,7 @@ def main():
             labels = torch.randint(0, args.label_dim, (args.batch_size,), device=device)
             cond = torch.nn.functional.one_hot(labels, args.label_dim).float()
             x_T = net.noise_scheduler.latents(noise=eps, t_init=sigmas[0])
-            x_0 = net.sample(noise=eps, condition=cond, guidance_scale=None, num_steps=args.num_steps)
+            x_0 = heun_sample(net, eps, cond, sigmas, autocast=not args.no_autocast)
             for b in range(args.batch_size):
                 if idx >= args.num_samples:
                     break
