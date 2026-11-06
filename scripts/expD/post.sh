@@ -11,8 +11,8 @@ if [ $(ls $HELD/*.tar 2>/dev/null | wc -l) -lt 2 ]; then
 fi
 CFG=fastgen/configs/experiments/WanT2V/config_kd_causal_swift.py
 COMMON="log_config.wandb_mode=disabled model.input_shape=[$LATENT] model.net.total_num_frames=$NUM_FRAMES"
-$PY scripts/expD/eval_checkpoints.py --config $CFG --heldout-dir $HELD --videos 2 --out /tmp/fg/out/evalD_baseline.json -- $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  > /tmp/fg/evalD_baseline.log 2>&1
+$PY scripts/expD/eval_checkpoints.py --config $CFG --heldout-dir $HELD --videos 2 --out /tmp/fg/out/evalD_baseline.json - $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  > /tmp/fg/evalD_baseline.log 2>&1
 echo "== EVAL baseline EXIT=$? $(date -u)"
-$PY scripts/expD/eval_checkpoints.py --config $CFG --heldout-dir $HELD --videos 2 --out /tmp/fg/out/evalD_swift.json    -- $COMMON model.swift_alpha=0.25 log_config.name=kd_causal_swift_a025 > /tmp/fg/evalD_swift.log 2>&1
+$PY scripts/expD/eval_checkpoints.py --config $CFG --heldout-dir $HELD --videos 2 --out /tmp/fg/out/evalD_swift.json    - $COMMON model.swift_alpha=0.25 log_config.name=kd_causal_swift_a025 > /tmp/fg/evalD_swift.log 2>&1
 echo "== EVAL swift EXIT=$? $(date -u)"
 echo "== POST DONE $(date -u)"
