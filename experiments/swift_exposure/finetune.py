@@ -135,7 +135,8 @@ def main():
     student = pipe.generator
     frozen = copy.deepcopy(student).to(torch.bfloat16).eval().requires_grad_(False)
     student.model.requires_grad_(True)
-    student.enable_gradient_checkpointing()
+    # newer diffusers changed the _set_gradient_checkpointing signature; the Wan model reads this flag directly
+    student.model.gradient_checkpointing = True
     sched = pipe.scheduler
     opt = torch.optim.AdamW([q for q in student.parameters() if q.requires_grad], lr=args.lr, betas=(0.9, 0.999), weight_decay=0.01)
 
