@@ -5,7 +5,8 @@ import attrs
 from omegaconf import DictConfig
 
 from fastgen.utils import LazyCall as L
-from fastgen.configs.config import BaseConfig, BaseModelConfig
+from fastgen.configs.config import BaseConfig
+from fastgen.configs.methods.config_kd import KDModelConfig
 from fastgen.methods import CausalKDModel
 from fastgen.configs.callbacks import (
     WANDB_CALLBACK,
@@ -17,7 +18,7 @@ from fastgen.configs.callbacks import (
 
 
 @attrs.define(slots=False)
-class ModelConfig(BaseModelConfig):
+class ModelConfig(KDModelConfig):
     context_noise: float = 0.0
 
 

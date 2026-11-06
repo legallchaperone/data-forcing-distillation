@@ -6,7 +6,7 @@ Training callbacks for FastGen. All callbacks inherit from `Callback` and hook i
 
 | Callback | Description |
 |----------|-------------|
-| [`EMACallback`](ema.py) | Exponential Moving Average updates (constant, power, or halflife schedules) |
+| [`EMACallback`](ema.py) | Exponential Moving Average updates (constant, power, or halflife schedules), or a one-off frozen `snapshot` of the student at `snapshot_iter` (e.g. the SWIFT weak guide for KD) |
 | [`GradClipCallback`](grad_clip.py) | Gradient norm clipping with NaN/Inf handling |
 | [`WandbCallback`](wandb.py) | Weights & Biases logging (metrics, images, videos) |
 | [`GPUStatsCallback`](gpu_stats.py) | GPU memory and utilization logging |

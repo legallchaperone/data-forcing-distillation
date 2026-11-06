@@ -28,6 +28,8 @@ class EMACallback(Callback):
         # params for type=halflife
         ema_halflife_kimg: float = 500,
         ema_rampup_ratio: Optional[float] = 0.05,
+        # params for type=snapshot: copy the student once at this (total) iteration, then freeze
+        snapshot_iter: int = 0,
         ema_name: str = "ema",
         batch_size: int = 1,  # overwritten by self.config if it exists
         fsdp: bool = False,  # overwritten by self.config if it exists
@@ -37,6 +39,7 @@ class EMACallback(Callback):
         self.gamma = gamma
         self.ema_halflife_kimg = ema_halflife_kimg
         self.ema_rampup_ratio = ema_rampup_ratio
+        self.snapshot_iter = snapshot_iter
         self.ema_name = ema_name
         self.batch_size = batch_size
         self._is_fsdp = fsdp
@@ -108,6 +111,13 @@ class EMACallback(Callback):
             beta = self._power_function_beta(self._total_iteration(model, iteration))
         elif self.type == "halflife":
             beta = self._halflife_beta(self._total_iteration(model, iteration))
+        elif self.type == "snapshot":
+            # A frozen copy of the student taken once at `snapshot_iter` (e.g. the weak guide for SWIFT).
+            # Nothing to do on any other iteration, so skip the (FSDP all-gather) update entirely.
+            if self._total_iteration(model, iteration) != self.snapshot_iter:
+                return
+            beta = 0.0
+            logger.info(f"Taking snapshot of the student network into {self.ema_name} at iteration {iteration}.")
         else:
             raise ValueError(f"Invalid {self.ema_name} type: {self.type}")
 

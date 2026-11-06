@@ -10,9 +10,10 @@ import torch
 import torch.nn.functional as F
 from fastgen.methods import FastGenModel, CausVidModel
 from fastgen.utils import expand_like
+import fastgen.utils.logging_utils as logger
 
 if TYPE_CHECKING:
-    from fastgen.configs.config import BaseModelConfig as ModelConfig
+    from fastgen.configs.methods.config_kd import KDModelConfig as ModelConfig
 
 
 class KDModel(FastGenModel):
@@ -22,13 +23,70 @@ class KDModel(FastGenModel):
         Args:
             config (ModelConfig): The configuration for the knowledge distillation model.
             This model directly learns the pre-constructed ODE pairs from the teacher model.
+
+            Optional SWIFT target extrapolation (arXiv:2610.25844): when `config.swift_alpha > 0`, the regression
+            target `x_T` becomes `x_T + alpha * (x_T - G_weak(x_t, t))` where `G_weak` is a frozen snapshot of the
+            student taken at `config.swift_snapshot_iter` by an `EMACallback(type="snapshot")` into the network
+            named `config.swift_weak_name`. Before the snapshot exists the plain KD target is used.
         """
+        self.swift_alpha = float(getattr(config, "swift_alpha", 0.0) or 0.0)
+        self.swift_snapshot_iter = int(getattr(config, "swift_snapshot_iter", 0) or 0)
+        self.swift_weak_name = getattr(config, "swift_weak_name", "ema_swift")
+        if self.swift_alpha > 0:
+            assert self.swift_weak_name.startswith("ema"), "swift_weak_name must start with `ema`"
+            # The weak snapshot is held like an EMA network (full copy per rank, not sharded, checkpointed).
+            use_ema = config.use_ema
+            if isinstance(use_ema, bool):
+                use_ema = ["ema"] if use_ema else []
+            if self.swift_weak_name not in use_ema:
+                config.use_ema = list(use_ema) + [self.swift_weak_name]
         super().__init__(config)
         self.config = config
 
     def build_model(self):
         super().build_model()
         self.load_student_weights_and_ema()
+
+    @property
+    def net_inference(self):
+        """Same as FastGenModel.net_inference, but never use the SWIFT weak snapshot for inference."""
+        use_ema_for_inference = self.use_ema and not getattr(self, "_is_fsdp", False)
+        if use_ema_for_inference:
+            for name in self.use_ema:
+                if name != self.swift_weak_name:
+                    return getattr(self, name)
+        return self.net
+
+    def _total_iteration(self, iteration: int) -> int:
+        resume_iter = getattr(self, "resume_iter", None)
+        return iteration + resume_iter if isinstance(resume_iter, int) else iteration
+
+    def swift_active(self, iteration: int) -> bool:
+        """SWIFT is active once the weak snapshot has been taken (at the end of `swift_snapshot_iter`)."""
+        return self.swift_alpha > 0 and self._total_iteration(iteration) > self.swift_snapshot_iter
+
+    def swift_target(
+        self,
+        target: torch.Tensor,
+        input_student: torch.Tensor,
+        t_student: torch.Tensor,
+        condition: Any,
+        iteration: int,
+    ) -> torch.Tensor:
+        """Return the KD regression target, extrapolated away from the weak snapshot when SWIFT is active.
+
+        target_swift = target + alpha * (target - G_weak(input_student, t_student))
+        """
+        if not self.swift_active(iteration):
+            return target
+        weak = getattr(self, self.swift_weak_name, None)
+        if weak is None:
+            if iteration == self.swift_snapshot_iter + 1:
+                logger.warning(f"SWIFT weak network `{self.swift_weak_name}` not found; using the plain KD target.")
+            return target
+        with torch.no_grad():
+            weak_pred = weak(input_student, t_student, condition=condition, fwd_pred_type="x0")
+            return target + self.swift_alpha * (target - weak_pred.to(target.dtype))
 
     def _get_outputs(
         self,
@@ -120,14 +178,19 @@ class KDModel(FastGenModel):
 
         gen_data = self.gen_data_from_net(input_student, t_student, condition=condition)
 
-        # Compute the l2 loss between the generated data and the denoised data
-        loss = 0.5 * F.mse_loss(gen_data, denoised_data, reduction="mean")
+        # Compute the l2 loss between the generated data and the (optionally SWIFT-extrapolated) denoised data
+        target = self.swift_target(denoised_data, input_student, t_student, condition, iteration)
+        loss = 0.5 * F.mse_loss(gen_data, target, reduction="mean")
 
         # Build output dictionaries
         loss_map = {
             "total_loss": loss,
             "recon_loss": loss,
         }
+        if self.swift_alpha > 0:
+            # plain (un-extrapolated) regression loss: the unbiased proxy for the student's error w.r.t. the teacher
+            loss_map["recon_loss_plain"] = 0.5 * F.mse_loss(gen_data.detach(), denoised_data, reduction="mean")
+            loss_map["swift_active"] = torch.tensor(float(self.swift_active(iteration)), device=loss.device)
         outputs = self._get_outputs(gen_data, input_student, condition=condition)
 
         return loss_map, outputs
@@ -198,14 +261,18 @@ class CausalKDModel(KDModel):
         # generate data
         gen_data = self.gen_data_from_net(noisy_data, t_inhom, condition=condition)
 
-        # Compute the l2 loss between the generated data and the denoised data
-        loss = 0.5 * F.mse_loss(gen_data, denoised_data, reduction="mean")
+        # Compute the l2 loss between the generated data and the (optionally SWIFT-extrapolated) denoised data
+        target = self.swift_target(denoised_data, noisy_data, t_inhom, condition, iteration)
+        loss = 0.5 * F.mse_loss(gen_data, target, reduction="mean")
 
         # Build output dictionaries
         loss_map = {
             "total_loss": loss,
             "recon_loss": loss,
         }
+        if self.swift_alpha > 0:
+            loss_map["recon_loss_plain"] = 0.5 * F.mse_loss(gen_data.detach(), denoised_data, reduction="mean")
+            loss_map["swift_active"] = torch.tensor(float(self.swift_active(iteration)), device=loss.device)
         outputs = self._get_outputs(gen_data, condition=condition)
 
         return loss_map, outputs
