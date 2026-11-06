@@ -138,7 +138,7 @@ def main(config: BaseConfig):
             path=ckpt_path,
         )
         model.on_train_begin()
-        inference_net = getattr(model, model.use_ema[0]) if model.use_ema else model.net
+        inference_net = model.net_inference  # EMA when available; never an auxiliary network such as the SWIFT weak snapshot
         inference_net.eval()
         ctx = dict(device=model.device, dtype=model.precision)
 
