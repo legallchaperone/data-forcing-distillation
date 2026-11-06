@@ -1443,8 +1443,8 @@ class RFNoiseSchedule(BaseNoiseSchedule):
 
         # Store original dtype for final conversion
         original_dtype = xt.dtype
-        if len(t.shape) > 1:
-            # t: [B, T] -> [B, 1, T] -> [B, C, T]
+        if t.ndim == 2:
+            # t: [B, T] -> [B, 1, T] -> [B, C, T]  (a t that is already broadcastable to xt is left as is)
             t = t.unsqueeze(1).expand(-1, xt.shape[1], -1)
 
         # Convert to double precision for calculation

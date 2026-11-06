@@ -46,10 +46,7 @@ def create_config():
     if os.path.isfile(_index):
         with open(_index) as f:
             # recorded as float32 (e.g. 0.99900007): round and clamp into the scheduler's valid range
-            config.model.sample_t_cfg.t_list = [
-                min(max(round(float(t), 6), config.model.sample_t_cfg.min_t), config.model.sample_t_cfg.max_t)
-                for t in json.load(f)["path_timesteps"]
-            ]
+            config.model.sample_t_cfg.t_list = [min(round(float(t), 6), 0.999) for t in json.load(f)["path_timesteps"]]
 
     # SWIFT: weak = student snapshot at 1/4 of the budget, extrapolation strength 0.25
     config.model.swift_alpha = 0.25
