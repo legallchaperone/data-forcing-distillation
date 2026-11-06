@@ -10,7 +10,7 @@ mkdir -p $DATA
 # the deadline is fixed at first launch so that re-runs do not extend the generation budget
 [ -f $DATA/.deadline ] || date -u -d "+${GEN_HOURS:-3} hours" +%s > $DATA/.deadline
 GEN_DEADLINE=$(cat $DATA/.deadline)
-complete_shards() { n=0; for t in $(ls $DATA/*.tar 2>/dev/null | sort); do c=$(tar tf $t 2>/dev/null | wc -l); if [ "$c" -eq $((SHARD*4)) ]; then n=$((n+1)); else rm -f $t; echo "removed incomplete shard $t ($c entries)" >&2; fi; done; echo $n; }
+complete_shards() { n=0; for t in $(ls $DATA/*.tar 2>/dev/null | sort); do c=$(tar tf $t 2>/dev/null | wc -l); if tar tf $t >/dev/null 2>&1 && [ "$c" -eq $((SHARD*4)) ]; then n=$((n+1)); else rm -f $t; echo "removed incomplete shard $t ($c entries)" >&2; fi; done; echo $n; }
 echo "== EXPD START $(date -u)  deadline $(date -u -d @$GEN_DEADLINE)"
 if [ ! -f $DATA/.gen_done ]; then
   while [ $(date +%s) -lt $GEN_DEADLINE ]; do

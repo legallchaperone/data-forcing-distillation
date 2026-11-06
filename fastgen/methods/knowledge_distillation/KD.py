@@ -250,7 +250,6 @@ class CausalKDModel(KDModel):
             sample_steps=self.config.student_sample_steps,
             t_list=self.config.sample_t_cfg.t_list,  # Note t_list to be aligned the `path`'s timesteps
             device=self.device,
-            dtype=denoise_path.dtype,
         )  # [batch_size, num_frames]
         expand_shape = [ids.shape[0], 1, 1, ids.shape[1]] + [1] * max(0, denoise_path.ndim - 4)
         ids = ids.view(expand_shape).expand(-1, -1, *denoise_path.shape[2:])  # [batch_size, 1, C, num_frames, H, W]
