@@ -4,11 +4,10 @@
 # Env knobs: GEN_HOURS (default 3) generation budget from first launch; TARGET (default 400) max samples;
 #            MAX_ITER (default 2000), SAVE_EVERY (default 250), SNAPSHOT (default MAX_ITER/4);
 #            LATENT (default 16,21,60,104 = 480p x 81 frames; e.g. 16,9,40,72 = 320x576 x 33 frames);
-#            WORKERS (default 2) and SHUFFLE (default 32): keep host memory bounded (samples are ~50 MB each).
 source /tmp/fg/env.sh; cd /tmp/fg/src
 DATA=/tmp/fg/out/DATA/wan1.3b-kd-paths; SHARD=8; TARGET=${TARGET:-400}
 MAX_ITER=${MAX_ITER:-2000}; SAVE_EVERY=${SAVE_EVERY:-250}; SNAPSHOT=${SNAPSHOT:-$((MAX_ITER/4))}
-LATENT=${LATENT:-16,21,60,104}; WORKERS=${WORKERS:-2}; SHUFFLE=${SHUFFLE:-32}
+LATENT=${LATENT:-16,21,60,104}
 NUM_FRAMES=$(echo $LATENT | cut -d, -f2)
 mkdir -p $DATA
 # the deadline is fixed at first launch so that re-runs do not extend the generation budget
@@ -29,7 +28,7 @@ if [ ! -f $DATA/.gen_done ]; then
   done
   N=$(complete_shards); echo "== GEN DONE: $N complete shards = $((N*SHARD)) samples $(date -u)"; touch $DATA/.gen_done
 fi
-COMMON="trainer.max_iter=$MAX_ITER trainer.save_ckpt_iter=$SAVE_EVERY trainer.validation_iter=100000 trainer.logging_iter=25 model.swift_snapshot_iter=$SNAPSHOT trainer.callbacks.ema_swift.snapshot_iter=$SNAPSHOT log_config.wandb_mode=disabled model.input_shape=[$LATENT] model.net.total_num_frames=$NUM_FRAMES dataloader_train.num_workers=$WORKERS dataloader_train.shuffle_size=$SHUFFLE"
+COMMON="trainer.max_iter=$MAX_ITER trainer.save_ckpt_iter=$SAVE_EVERY trainer.validation_iter=100000 trainer.logging_iter=25 model.swift_snapshot_iter=$SNAPSHOT trainer.callbacks.ema_swift.snapshot_iter=$SNAPSHOT log_config.wandb_mode=disabled model.input_shape=[$LATENT] model.net.total_num_frames=$NUM_FRAMES"
 CFG=fastgen/configs/experiments/WanT2V/config_kd_causal_swift.py
 echo "== TRAIN LAUNCH $(date -u)"
 nohup $PY train.py --config $CFG - $COMMON model.swift_alpha=0.0  log_config.name=kd_causal_baseline  >> /tmp/fg/trainD_baseline.log 2>&1 &

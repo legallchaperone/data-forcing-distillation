@@ -5,6 +5,8 @@ import copy
 import json
 import os
 
+from omegaconf import open_dict
+
 import fastgen.configs.methods.config_kd_causal as config_kd_causal_default
 from fastgen.callbacks.ema import EMACallback
 from fastgen.configs.data import DATA_ROOT_DIR, PathLoaderConfig
@@ -65,6 +67,10 @@ def create_config():
     config.dataloader_train = copy.deepcopy(PathLoaderConfig)
     config.dataloader_train.datatags = [f"WDS:{PATH_DATA_DIR}"]
     config.dataloader_train.batch_size = 2
+    # Path samples are ~50 MB each: bound host memory (the loader default is 16 workers x 1000-sample shuffle buffer).
+    with open_dict(config.dataloader_train):
+        config.dataloader_train.num_workers = 2
+        config.dataloader_train.shuffle_size = 32
 
     config.log_config.group = "wan_kd_causal_swift"
     return config
