@@ -113,6 +113,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--alpha", type=float, default=0.0)
     ap.add_argument("--mode", default="T3", choices=["T3", "T2"])
+    ap.add_argument("--alpha_schedule", default="", help='per-timestep alpha, e.g. "625:1.9,833:1.3,937:0.8,1000:0.4" (overrides --alpha)')
     ap.add_argument("--steps", type=int, default=400)
     ap.add_argument("--lr", type=float, default=1e-5)
     ap.add_argument("--accum", type=int, default=2)
@@ -129,6 +130,11 @@ def main():
     p = args.prefix_blocks * BLK
 
     pipe, steps = build(args, dev)
+    alpha_of = {t: args.alpha for t in steps}
+    if args.alpha_schedule:
+        alpha_of = {int(k): float(v) for k, v in (kv.split(":") for kv in args.alpha_schedule.split(","))}
+        assert set(alpha_of) == set(steps), (alpha_of, steps)
+    print("alpha per timestep:", alpha_of, flush=True)
     train_items, hold_items = load_data(args, dev, pipe)
     print(f"train videos {len(train_items)}  held-out {len(hold_items)}  timesteps {steps}", flush=True)
 
@@ -165,16 +171,17 @@ def main():
             tt = torch.full([z.shape[1]], t, device=dev, dtype=torch.long)
             noisy = sched.add_noise(z.flatten(0, 1), noise.flatten(0, 1), tt).unflatten(0, z.shape[:2])
             x0 = z[:, tb:tb + BLK].float()
+            a_t = alpha_of[t]
             with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
-                if args.alpha == 0:
+                if a_t == 0:
                     y = x0
                 elif args.mode == "T3":
                     Fgen = tf_pred(frozen, cond, clean_gen, noisy, t)[:, tb:tb + BLK].float()
                     Fgt = tf_pred(frozen, cond, z, noisy, t)[:, tb:tb + BLK].float()
-                    y = x0 + args.alpha * (Fgt - Fgen)
+                    y = x0 + a_t * (Fgt - Fgen)
                 else:
                     Fgen = tf_pred(frozen, cond, clean_gen, noisy, t)[:, tb:tb + BLK].float()
-                    y = x0 + args.alpha * (x0 - Fgen)
+                    y = x0 + a_t * (x0 - Fgen)
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 pred = tf_pred(student, cond, clean_gen, noisy, t)[:, tb:tb + BLK].float()
             loss = torch.nn.functional.mse_loss(pred, y) / args.accum
