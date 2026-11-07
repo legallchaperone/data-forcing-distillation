@@ -1,0 +1,14 @@
+KV inference with 3 frames per block
+[26 seed 0] 27.6s
+[26 seed 1] 16.9s
+[27 seed 0] 27.0s
+[27 seed 1] 16.9s
+[28 seed 0] 16.9s
+[28 seed 1] 17.0s
+[29 seed 0] 17.0s
+[29 seed 1] 17.0s
+[30 seed 0] 16.9s
+[30 seed 1] 17.0s
+[31 seed 0] 16.9s
+[31 seed 1] 17.0s
+uploaded /marimo/work/data/roll_t3_sched -> hf://cwx-umich/dmd-swift

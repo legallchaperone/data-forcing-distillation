@@ -1,11 +1,19 @@
 HF user: cwx-umich
 mirroring to hf://cwx-umich/dmd-swift
-=== 03:38:27 restore from hf://cwx-umich/dmd-swift
-Fetching 1 files:   0%|          | 0/1 [00:00<?, ?it/s]Fetching 1 files: 100%|██████████| 1/1 [00:00<00:00, 16.51it/s]
-=== 03:38:27 teacher
+=== 16:03:56 restore from hf://cwx-umich/dmd-swift
+Fetching 75 files:   0%|          | 0/75 [00:00<?, ?it/s]Fetching 75 files:   1%|▏         | 1/75 [00:00<00:08,  9.01it/s]Fetching 75 files:   5%|▌         | 4/75 [00:00<00:12,  5.68it/s]Fetching 75 files:  12%|█▏        | 9/75 [00:00<00:05, 13.11it/s]Fetching 75 files:  16%|█▌        | 12/75 [00:01<00:06,  9.42it/s]Fetching 75 files:  19%|█▊        | 14/75 [00:01<00:06, 10.01it/s]Fetching 75 files:  21%|██▏       | 16/75 [00:04<00:25,  2.29it/s]Fetching 75 files:  24%|██▍       | 18/75 [00:10<01:11,  1.25s/it]Fetching 75 files:  29%|██▉       | 22/75 [00:11<00:37,  1.41it/s]Fetching 75 files:  33%|███▎      | 25/75 [00:11<00:25,  1.97it/s]Fetching 75 files:  37%|███▋      | 28/75 [00:11<00:17,  2.74it/s]Fetching 75 files:  43%|████▎     | 32/75 [00:11<00:10,  4.18it/s]Fetching 75 files:  48%|████▊     | 36/75 [00:11<00:06,  6.05it/s]Fetching 75 files:  52%|█████▏    | 39/75 [00:13<00:09,  3.74it/s]Fetching 75 files:  56%|█████▌    | 42/75 [00:13<00:06,  4.85it/s]Fetching 75 files:  59%|█████▊    | 44/75 [00:14<00:08,  3.82it/s]Fetching 75 files:  61%|██████▏   | 46/75 [00:14<00:07,  4.08it/s]Fetching 75 files:  64%|██████▍   | 48/75 [00:17<00:13,  2.05it/s]Fetching 75 files:  65%|██████▌   | 49/75 [00:17<00:13,  1.90it/s]Fetching 75 files:  67%|██████▋   | 50/75 [00:18<00:11,  2.20it/s]Fetching 75 files:  68%|██████▊   | 51/75 [00:19<00:14,  1.66it/s]Fetching 75 files:  71%|███████   | 53/75 [00:20<00:11,  1.91it/s]Fetching 75 files:  72%|███████▏  | 54/75 [00:20<00:09,  2.25it/s]Fetching 75 files:  73%|███████▎  | 55/75 [00:20<00:08,  2.44it/s]Fetching 75 files:  76%|███████▌  | 57/75 [00:21<00:08,  2.08it/s]Fetching 75 files:  79%|███████▊  | 59/75 [00:22<00:06,  2.61it/s]Fetching 75 files:  80%|████████  | 60/75 [00:23<00:07,  1.88it/s]Fetching 75 files:  81%|████████▏ | 61/75 [00:24<00:09,  1.54it/s]Fetching 75 files:  83%|████████▎ | 62/75 [00:25<00:09,  1.33it/s]Fetching 75 files:  84%|████████▍ | 63/75 [00:26<00:09,  1.23it/s]Fetching 75 files:  85%|████████▌ | 64/75 [00:26<00:07,  1.45it/s]Fetching 75 files:  87%|████████▋ | 65/75 [00:28<00:09,  1.10it/s]Fetching 75 files:  88%|████████▊ | 66/75 [00:28<00:06,  1.40it/s]Fetching 75 files:  89%|████████▉ | 67/75 [00:28<00:05,  1.54it/s]Fetching 75 files:  91%|█████████ | 68/75 [00:29<00:03,  1.77it/s]Fetching 75 files:  92%|█████████▏| 69/75 [00:30<00:04,  1.27it/s]Fetching 75 files:  95%|█████████▍| 71/75 [00:31<00:02,  1.81it/s]Fetching 75 files:  96%|█████████▌| 72/75 [00:31<00:01,  1.53it/s]Fetching 75 files:  97%|█████████▋| 73/75 [00:34<00:02,  1.23s/it]Fetching 75 files:  99%|█████████▊| 74/75 [00:35<00:01,  1.11s/it]Fetching 75 files: 100%|██████████| 75/75 [01:41<00:00, 19.18s/it]Fetching 75 files: 100%|██████████| 75/75 [01:41<00:00,  1.35s/it]
+ft_a0
+kappa
+roll_a0
+roll_init
+teacher
+=== 16:05:38 teacher
+No files have been modified since last commit. Skipping to prevent empty commit.
 uploaded /marimo/work/data/teacher -> hf://cwx-umich/dmd-swift
-=== 04:42:23 measure
-=== 05:02:21 rollout init
-=== 05:07:22 finetune ft_a0
-=== 07:54:34 rollout a0
-=== 07:59:38 finetune ft_t3_sched
+=== 16:05:39 measure
+=== 16:05:39 rollout init
+=== 16:05:40 finetune ft_a0
+=== 16:05:40 rollout a0
+=== 16:05:40 finetune ft_t3_sched
+=== 19:49:53 rollout t3_sched
+=== 19:54:50 finetune ft_t3_a1

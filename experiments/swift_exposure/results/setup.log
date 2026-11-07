@@ -1,11 +1,12 @@
+Cloning into 'sf_src'...
  + urllib3==2.8.0
  + wcwidth==0.9.4
  + zipp==4.1.2
-already patched: sf/wan/modules/attention.py
-already patched: sf/wan/modules/attention.py
-already patched: sf/wan/modules/clip.py
-already patched: sf/wan/__init__.py
-already patched: sf/wan/__init__.py
+patched: sf/wan/modules/attention.py
+patched: sf/wan/modules/attention.py
+patched: sf/wan/modules/clip.py
+patched: sf/wan/__init__.py
+patched: sf/wan/__init__.py
 done
 [32m✓ Downloaded[0m
   path: /marimo/work/sf/wan_models/Wan2.1-T2V-1.3B
