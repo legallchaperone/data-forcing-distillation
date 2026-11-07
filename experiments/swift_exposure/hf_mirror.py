@@ -11,7 +11,8 @@ def hf_upload(out_dir, repo=None):
         from huggingface_hub import HfApi
         api = HfApi()
         api.create_repo(repo, private=True, exist_ok=True)
-        api.upload_folder(folder_path=out_dir, path_in_repo=os.path.basename(out_dir.rstrip("/")), repo_id=repo)
+        name = os.path.basename(out_dir.rstrip("/"))
+        api.upload_folder(folder_path=out_dir, path_in_repo=name, repo_id=repo, delete_patterns=[f"{name}/student_latest.pt"] if not os.path.exists(os.path.join(out_dir, "student_latest.pt")) else None)
         print(f"uploaded {out_dir} -> hf://{repo}", flush=True)
         return True
     except Exception as e:

@@ -125,6 +125,7 @@ def main():
     ap.add_argument("--eval_every", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--save_ckpt", action="store_true")
+    ap.add_argument("--ckpt_every", type=int, default=100, help="save + mirror student weights every N steps and resume from them")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     random.seed(args.seed); torch.manual_seed(args.seed)
@@ -162,9 +163,17 @@ def main():
         print(f"[eval step {step}] mean kappa {km:.3f}  " + "  ".join(f"m{r['m']}t{r['t']}:{r['kappa']:.2f}" for r in sorted(rows, key=lambda r: (r['m'], -r['t']))), flush=True)
         student.train()
 
-    do_eval(0)
+    start = 0
+    latest = os.path.join(args.out, "student_latest.pt")
+    if os.path.exists(latest):
+        ck = torch.load(latest, map_location="cpu")
+        student.load_state_dict({k: v.float() for k, v in ck["generator"].items()})
+        start = int(ck.get("step", 0))
+        print(f"resumed weights from {latest} at step {start} (optimizer state restarts)", flush=True)
+    if start == 0:
+        do_eval(0)
     t0 = time.time()
-    for step in range(1, args.steps + 1):
+    for step in range(start + 1, args.steps + 1):
         opt.zero_grad(set_to_none=True)
         tot = 0.0
         for _ in range(args.accum):
@@ -195,11 +204,16 @@ def main():
         log.write(json.dumps(dict(step=step, loss=tot, grad_norm=gn, t=t, m=m)) + "\n")
         if step % 10 == 0:
             log.flush()
-            print(f"step {step} loss {tot:.4f} gn {gn:.2f} {(time.time() - t0) / step:.1f}s/it", flush=True)
+            print(f"step {step} loss {tot:.4f} gn {gn:.2f} {(time.time() - t0) / max(1, step - start):.1f}s/it", flush=True)
+        if args.ckpt_every and step % args.ckpt_every == 0 and step < args.steps:
+            torch.save({"generator": {k: v.to(torch.bfloat16) for k, v in student.state_dict().items()}, "step": step}, latest)
+            hf_upload(args.out)
         if step % args.eval_every == 0 or step == args.steps:
             do_eval(step)
     if args.save_ckpt:
         torch.save({"generator": {k: v.to(torch.bfloat16) for k, v in student.state_dict().items()}}, os.path.join(args.out, "student.pt"))
+        if os.path.exists(latest):
+            os.remove(latest)
         hf_upload(args.out)
     print("DONE", flush=True)
 
