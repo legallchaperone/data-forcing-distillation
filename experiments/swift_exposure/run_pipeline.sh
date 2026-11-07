@@ -47,8 +47,8 @@ ft ft_a0 --alpha 0
 roll a0 $D/ft_a0/student.pt
 ft ft_t3_sched --mode T3 --alpha_schedule 625:1.9,833:1.3,937:0.8,1000:0.4
 roll t3_sched $D/ft_t3_sched/student.pt
-ft ft_t3_a1 --mode T3 --alpha 1.0
-roll t3_a1 $D/ft_t3_a1/student.pt
+ft ft_t3_a03 --mode T3 --alpha 0.3
+roll t3_a03 $D/ft_t3_a03/student.pt
 ft ft_t2_a1 --mode T2 --alpha 1.0
 roll t2_a1 $D/ft_t2_a1/student.pt
 stage PIPELINE_DONE
