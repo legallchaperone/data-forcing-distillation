@@ -38,3 +38,41 @@ step 20 loss 0.3267 gn 7.91 29.2s/it
 step 30 loss 0.1554 gn 1.69 26.8s/it
 step 40 loss 0.0707 gn 0.59 25.7s/it
 step 50 loss 0.0921 gn 1.37 25.0s/it
+step 60 loss 0.0552 gn 0.53 24.5s/it
+step 70 loss 0.0500 gn 0.54 24.1s/it
+step 80 loss 0.0515 gn 0.21 23.9s/it
+step 90 loss 0.0366 gn 0.18 23.7s/it
+step 100 loss 0.0413 gn 0.84 23.5s/it
+step 110 loss 0.0552 gn 0.62 23.4s/it
+step 120 loss 0.0744 gn 0.46 23.3s/it
+step 130 loss 0.0263 gn 0.13 23.2s/it
+step 140 loss 0.0888 gn 0.43 23.1s/it
+step 150 loss 0.0535 gn 0.33 23.1s/it
+step 160 loss 0.1060 gn 0.69 23.0s/it
+step 170 loss 0.0444 gn 0.58 23.0s/it
+step 180 loss 0.0661 gn 0.55 22.9s/it
+step 190 loss 0.0527 gn 0.40 22.9s/it
+step 200 loss 0.0346 gn 0.20 22.8s/it
+step 210 loss 0.0224 gn 0.08 22.8s/it
+step 220 loss 0.0705 gn 0.62 22.8s/it
+step 230 loss 0.0805 gn 0.72 22.7s/it
+step 240 loss 0.0486 gn 0.27 22.7s/it
+step 250 loss 0.0220 gn 0.24 22.7s/it
+step 260 loss 0.0615 gn 0.34 22.7s/it
+step 270 loss 0.0590 gn 0.42 22.7s/it
+step 280 loss 0.1116 gn 1.07 22.6s/it
+step 290 loss 0.0514 gn 0.35 22.6s/it
+step 300 loss 0.2135 gn 0.85 22.6s/it
+step 310 loss 0.0735 gn 0.46 22.6s/it
+step 320 loss 0.0699 gn 0.61 22.6s/it
+step 330 loss 0.0257 gn 0.11 22.6s/it
+step 340 loss 0.0461 gn 0.24 22.5s/it
+step 350 loss 0.0708 gn 0.48 22.5s/it
+step 360 loss 0.0476 gn 0.19 22.5s/it
+step 370 loss 0.0247 gn 0.12 22.5s/it
+step 380 loss 0.0497 gn 0.27 22.5s/it
+step 390 loss 0.1037 gn 0.50 22.5s/it
+step 400 loss 0.0232 gn 0.09 22.5s/it
+[eval step 400] mean kappa 0.509  m1t1000:0.70  m1t937:0.53  m1t833:0.45  m1t625:0.35  m2t1000:0.72  m2t937:0.54  m2t833:0.43  m2t625:0.34  m3t1000:0.74  m3t937:0.55  m3t833:0.42  m3t625:0.34
+uploaded /marimo/work/data/ft_a0 -> hf://cwx-umich/dmd-swift
+DONE

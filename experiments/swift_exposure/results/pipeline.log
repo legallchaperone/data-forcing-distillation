@@ -7,3 +7,5 @@ uploaded /marimo/work/data/teacher -> hf://cwx-umich/dmd-swift
 === 04:42:23 measure
 === 05:02:21 rollout init
 === 05:07:22 finetune ft_a0
+=== 07:54:34 rollout a0
+=== 07:59:38 finetune ft_t3_sched

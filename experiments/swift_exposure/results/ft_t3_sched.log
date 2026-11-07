@@ -1,0 +1,9 @@
+KV inference with 3 frames per block
+alpha per timestep: {625: 1.9, 833: 1.3, 937: 0.8, 1000: 0.4}
+train videos 26  held-out 6  timesteps [1000, 937, 833, 625]
+/tmp/uv-venv/lib/python3.13/site-packages/triton/knobs.py:504: UserWarning: TRITON_DEFAULT_FP_FUSION is unset: defaulting to FP fusion ENABLED for backward compatibility in Triton 3.9. The default will change to DISABLED in Triton 3.10; set TRITON_DEFAULT_FP_FUSION=1 to keep fusion enabled or =0 to adopt the new default early and silence this warning.
+  warn_once(FP_FUSION_DEFAULT_WARNING)
+[eval step 0] mean kappa 0.001  m1t1000:-0.01  m1t937:0.00  m1t833:0.00  m1t625:0.00  m2t1000:-0.00  m2t937:0.00  m2t833:0.00  m2t625:0.00  m3t1000:-0.00  m3t937:0.00  m3t833:0.00  m3t625:0.00
+step 10 loss 0.2995 gn 4.24 30.6s/it
+step 20 loss 0.2719 gn 6.02 30.6s/it
+step 30 loss 0.2155 gn 3.04 30.5s/it
