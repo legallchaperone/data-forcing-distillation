@@ -9,15 +9,16 @@ D=$WORK/data
 N_TEACHER=${N_TEACHER:-32}
 STEPS=${STEPS:-400}
 cd "$WORK/sf" || exit 1
+stage() { echo "=== $(date +%T) $*"; }
+
 if [ -n "${HF_REPO:-}" ]; then
   $PY -c "from huggingface_hub import HfApi; print('HF user:', HfApi().whoami()['name'])" || { echo "HF_REPO set but not logged in (run: hf auth login)"; exit 1; }
   echo "mirroring to hf://$HF_REPO"
   stage "restore from hf://$HF_REPO"
-  $PY -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='$HF_REPO', local_dir='$D')" 2>&1 | tail -1
+  $PY -c "from huggingface_hub import HfApi, snapshot_download; HfApi().create_repo('$HF_REPO', private=True, exist_ok=True); snapshot_download(repo_id='$HF_REPO', local_dir='$D')" 2>&1 | tail -1
   mkdir -p $D; ls $D
 fi
 
-stage() { echo "=== $(date +%T) $*"; }
 
 stage teacher
 [ "$(ls $D/teacher/*.pt 2>/dev/null | wc -l)" -ge "$N_TEACHER" ] || \
