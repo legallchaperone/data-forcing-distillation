@@ -10,7 +10,11 @@ PY=${2:-/tmp/uv-venv/bin/python}
 HERE=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$WORK" && cd "$WORK"
 
-[ -d sf ] || git clone --depth 1 https://github.com/guandeh17/Self-Forcing.git sf
+# a restored sandbox snapshot can leave a partial sf/ (sources missing, weights present): refresh the sources in place
+if [ ! -f sf/configs/default_config.yaml ] || [ ! -f sf/pipeline/__init__.py ]; then
+  rm -rf sf_src && git clone --depth 1 https://github.com/guandeh17/Self-Forcing.git sf_src && rm -rf sf_src/.git
+  mkdir -p sf && cp -r sf_src/. sf/ && rm -rf sf_src
+fi
 
 uv pip install --python "$PY" diffusers omegaconf easydict ftfy imageio-ffmpeg av accelerate \
   opencv-python-headless sentencepiece "huggingface-hub>=1.5,<2" 2>&1 | tail -3
