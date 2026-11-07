@@ -74,6 +74,7 @@ FID is lower at every checkpoint; SWIFT at 2500 iterations already matches plain
 
 **Causal Wan 1.3B reference run** (`scripts/expD/`, single seed, reduced resolution 320x576 x 33 frames, 240 teacher
 paths, 1200 iters, batch 2, snapshot at 300; raw curves in `assets/experiments/wan_causal_kd_swift/results.json`):
-held-out plain MSE on 16 fresh teacher paths is flat at about 0.072 for both runs across all checkpoints, and the
-training loss plateaus from iteration 150. A null result at this scale: the student is not in the underfit regime
-that target extrapolation accelerates, and the run-to-run noise (about 10% before the snapshot) exceeds any effect.
+held-out plain MSE on 16 fresh teacher paths is flat at about 0.072 for both runs across all checkpoints (the
+one-step-from-noise term at t=0.999 dominates it), yet same-noise samples differ strongly: the plain-KD student
+collapses to a blurry posterior-mean-like video while the SWIFT student keeps texture and colors close to the teacher
+(`teacher_vs_students_same_noise.jpg`). MSE is the wrong metric for this comparison; judge with FVD or VBench.
