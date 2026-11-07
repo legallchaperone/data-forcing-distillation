@@ -71,6 +71,31 @@ to ~8 s, but colours over-saturate and streak (CFG-style over-extrapolation comp
   alpha=1 (its extrapolation also covers the sample-vs-mean residual, so it is the candidate against freezing;
   the toy found T2 better than T3 when branching is small, which is the regime here: drift is 35% of unrelated).
 
+## T3 with alpha(t) = 1.9 / 1.3 / 0.8 / 0.4 (t = 625 / 833 / 937 / 1000), from alpha* = 1/kappa - 1
+
+Rerun on a fresh sandbox (teacher clips, measurements and alpha=0 restored from hf://cwx-umich/dmd-swift; the alpha=0
+rerun reproduced kappa 0.70 / 0.53 / 0.45 / 0.35 exactly). 400 steps, same data and schedule.
+
+| metric | alpha=0 | T3 alpha=1 (first run) | T3 alpha(t) | teacher |
+| --- | --- | --- | --- | --- |
+| latent MSE to GT, block 1 | 0.09 | 0.13 | 0.11 | 0 |
+| statistics distance, block 0 / 9 / 19 | 2.4 / 2.2 / 2.1 | 2.2 / 2.1 / 3.0 | 2.3 / 2.4 / 4.2 | low, flat |
+| per-channel latent std, block 0 / 19 | 0.70 / 0.89 | 0.74 / 1.21 | 0.75 / 1.30 | stable |
+| motion, blocks 1-9 | 0.01-0.04 | 0.09-0.12 | 0.05-0.07 | 0.083 |
+| motion, blocks 16-19 | 0.01 | 0.04 | 0.02-0.03 | 0.083 |
+
+kappa @400: 0.55 / 0.62 / 0.68 / 0.78; projection on d ~ 1.0 at every t (the target is reached). Per-frame error at
+t=625 is now worse than the untuned model (ratio 1.05-1.15).
+
+Reading: the prediction "over-saturation comes from the t=1000 step" is falsified. Lowering alpha at high noise and
+raising it at low noise made saturation worse (std 1.30, drift 4.2 at block 19) and restored only half the motion.
+The saturation is produced at the low-noise steps, where extrapolation sharpens detail and contrast; per frame it
+looks like sharpening, over a rollout it compounds. alpha* = 1/kappa - 1 compensates per-frame shrinkage under the
+assumption that the compensated prediction does not re-enter the context; in an autoregressive rollout it does, so
+the rollout-optimal alpha is far below the per-frame optimum. Visual: `results/grid26_sched.jpg`.
+
+Next (queued): T3 alpha=0.3 uniform as the last cheap check for a usable small alpha, then T2 alpha=1.
+
 ## Caveats
 
 6 held-out clips; the 400-step regression fine-tunes are an order of magnitude below Rolling Forcing's DMD
