@@ -24,6 +24,8 @@ from omegaconf import OmegaConf
 
 sys.path.insert(0, os.getcwd())
 from pipeline import CausalInferencePipeline  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hf_mirror import hf_upload  # noqa: E402
 
 FRAME_SEQ = 1560
 BLK = 3
@@ -136,6 +138,7 @@ def main():
                 import imageio
                 imageio.mimwrite(os.path.join(args.out, f"{idx:05d}.mp4"), video, fps=16, codec="libx264", quality=7)
             print(f"[{idx} seed {s}] {time.time() - t0:.1f}s", flush=True)
+    hf_upload(args.out)
 
 
 if __name__ == "__main__":

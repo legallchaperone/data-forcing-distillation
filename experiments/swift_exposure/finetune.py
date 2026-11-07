@@ -26,24 +26,11 @@ from omegaconf import OmegaConf
 
 sys.path.insert(0, os.getcwd())
 from pipeline import CausalInferencePipeline  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hf_mirror import hf_upload  # noqa: E402
 
 BLK = 3
 
-
-def hf_upload(out_dir):
-    """If HF_REPO (and a logged-in token / HF_TOKEN) are set, mirror the run directory to that Hugging Face repo
-    so checkpoints survive a sandbox termination. Silent no-op otherwise."""
-    repo = os.environ.get("HF_REPO")
-    if not repo:
-        return
-    try:
-        from huggingface_hub import HfApi
-        api = HfApi()
-        api.create_repo(repo, private=True, exist_ok=True)
-        api.upload_folder(folder_path=out_dir, path_in_repo=os.path.basename(out_dir.rstrip("/")), repo_id=repo)
-        print(f"uploaded {out_dir} -> hf://{repo}", flush=True)
-    except Exception as e:  # never let an upload failure kill a finished run
-        print("HF upload failed:", repr(e)[:300], flush=True)
 
 
 def build(args, dev):
